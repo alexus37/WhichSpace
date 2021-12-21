@@ -14,38 +14,32 @@ class StatusItemCell: NSStatusBarButtonCell {
     
     override func drawImage(_ image: NSImage, withFrame frame: NSRect, in controlView: NSView) {
 
-        var darkColor: NSColor
-        var whiteColor: NSColor
-        if AppDelegate.darkModeEnabled {
-            darkColor = NSColor(calibratedWhite: 0.7, alpha: 1)
-            whiteColor = NSColor(calibratedWhite: 0, alpha: 1)
-        } else {
-            darkColor = NSColor(calibratedWhite: 0.3, alpha: 1)
-            whiteColor = NSColor(calibratedWhite: 1, alpha: 1)
-        }
+        let darkColor = NSColor(
+            calibratedWhite: AppDelegate.darkModeEnabled ? 0.7 : 0.0,
+            alpha: 0.0
+        )
+        let whiteColor = NSColor(
+            calibratedWhite: AppDelegate.darkModeEnabled ? 0 : 1,
+            alpha: 0.0
+        )
 
-        let blueColor = NSColor(calibratedRed: 0, green: 0.41, blue: 0.85, alpha: 1)
         let foregroundColor = isMenuVisible ? darkColor : whiteColor
-        let backgroundColor = isMenuVisible ? whiteColor : darkColor
         
-        if isMenuVisible {
-            let rectPath = NSBezierPath(rect: frame)
-            blueColor.setFill()
-            rectPath.fill()
-        }
-        
-        let roundedRectanglePath = NSBezierPath(roundedRect: NSRect(x: 5, y: 3, width: 16, height: 16), xRadius: 2, yRadius: 2)
-        backgroundColor.setFill()
-        roundedRectanglePath.fill()
-        
-        let titleRect = NSRect(x: frame.origin.x, y: frame.origin.y + 3, width: frame.size.width, height: frame.size.height)
+        let titleRect = NSRect(
+            x: frame.origin.x,
+            y: frame.origin.y,
+            width: frame.size.width,
+            height: frame.size.height
+        )
         
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment = NSTextAlignment.center
         
-        let font = NSFont.boldSystemFont(ofSize: 11)
-        let attributes = [convertFromNSAttributedStringKey(NSAttributedString.Key.font): font, convertFromNSAttributedStringKey(NSAttributedString.Key.paragraphStyle): paragraphStyle, convertFromNSAttributedStringKey(NSAttributedString.Key.foregroundColor): foregroundColor]
-        title.draw(in: titleRect, withAttributes:convertToOptionalNSAttributedStringKeyDictionary(attributes))
+        let attributes = [
+            NSAttributedString.Key.paragraphStyle: paragraphStyle,
+            NSAttributedString.Key.foregroundColor: foregroundColor
+        ]
+        title.draw(in: titleRect, withAttributes: attributes)
     }
 }
 

@@ -22,7 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
     let mainDisplay = "Main"
     let spacesMonitorFile = "~/Library/Preferences/com.apple.spaces.plist"
 
-    let statusBarItem = NSStatusBar.system.statusItem(withLength: 27)
+    let statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let conn = _CGSDefaultConnection()
 
     static var darkModeEnabled = false
@@ -119,10 +119,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
     @objc func updateActiveSpaceNumber() {
         let displays = CGSCopyManagedDisplaySpaces(conn) as! [NSDictionary]
         let activeDisplay = CGSCopyActiveMenuBarDisplayIdentifier(conn) as! String
-        let allSpaces: NSMutableArray = []
+        
         var activeSpaceID = -1
-
-        for d in displays {
+        var curVisibleSpaceID = -1
+        var prevSpaces = 1
+        let sandwichAttributes = [
+            NSAttributedString.Key.font: NSFont.systemFont(ofSize: 12),
+            NSAttributedString.Key.baselineOffset: NSNumber(value: 1.0)
+        ]
+        
+        let result = NSMutableAttributedString(string: "", attributes: sandwichAttributes)
+        
+        for (displayIndex, d) in displays.enumerated() {
+            let allSpaces: NSMutableArray = []
+            
             guard
                 let current = d["Current Space"] as? [String: Any],
                 let spaces = d["Spaces"] as? [[String: Any]],
@@ -137,7 +147,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
             default:
                 break
             }
-
+            
+            // gather all spaces on current display
             for s in spaces {
                 let isFullscreen = s["TileLayoutManager"] as? [String: Any] != nil
                 if isFullscreen {
@@ -145,24 +156,52 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
                 }
                 allSpaces.add(s)
             }
-        }
-
-        if activeSpaceID == -1 {
-            DispatchQueue.main.async {
-                self.statusBarItem.button?.title = "?"
-            }
-            return
-        }
-
-        for (index, space) in allSpaces.enumerated() {
-            let spaceID = (space as! NSDictionary)["ManagedSpaceID"] as! Int
-            let spaceNumber = index + 1
-            if spaceID == activeSpaceID {
-                DispatchQueue.main.async {
-                    self.statusBarItem.button?.title = String("\(spaceNumber)")
+            
+            for (index, space) in allSpaces.enumerated() {
+                let spaceUUID = (space as! NSDictionary)["uuid"] as! String
+                if((current["uuid"] as! String) == spaceUUID) {
+                    curVisibleSpaceID = prevSpaces + index
                 }
-                return
+                let spaceID = (space as! NSDictionary)["ManagedSpaceID"] as! Int
+                if(activeSpaceID == spaceID) {
+                    activeSpaceID = prevSpaces + index
+                }
             }
+            
+            let lhs = Array(prevSpaces..<curVisibleSpaceID).map { String($0) }.joined(separator: " ")
+                    
+            let rhs = curVisibleSpaceID != allSpaces.count + prevSpaces - 1
+                ? Array(curVisibleSpaceID + 1...(allSpaces.count + prevSpaces - 1)).map { String($0) }.joined(separator: " ")
+                : ""
+            
+            let formattedLHS = NSMutableAttributedString(string: lhs, attributes: sandwichAttributes)
+            let formattedRHS = NSMutableAttributedString(string: rhs, attributes: sandwichAttributes)
+
+            let boldAttributes = [
+                NSAttributedString.Key.font : NSFont.boldSystemFont(ofSize: 16),
+                NSAttributedString.Key.foregroundColor: curVisibleSpaceID == activeSpaceID ? NSColor.red: NSColor.white,
+            ]
+            
+            let cnt = String(" \(curVisibleSpaceID) ")
+            let formattedCNT = NSMutableAttributedString(string: cnt, attributes: boldAttributes)
+            
+            result.append(formattedLHS)
+            result.append(formattedCNT)
+            result.append(formattedRHS)
+            
+            if(displayIndex + 1 < displays.count) {
+                let splitAttributes = [
+                    NSAttributedString.Key.font : NSFont.boldSystemFont(ofSize: 16),
+                ]
+                let formattedSplit = NSMutableAttributedString(string: String(" | "), attributes: splitAttributes)
+                result.append(formattedSplit)
+            }
+            prevSpaces += allSpaces.count
+        }
+
+        
+        DispatchQueue.main.async {
+            self.statusBarItem.button?.attributedTitle = result
         }
     }
 
@@ -177,7 +216,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
             cell.isMenuVisible = false
         }
     }
-
     @IBAction func checkForUpdatesClicked(_ sender: NSMenuItem) {
         updater.checkForUpdates(sender)
     }
