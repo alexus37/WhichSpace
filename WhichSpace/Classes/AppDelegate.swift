@@ -167,36 +167,39 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
                     activeSpaceID = prevSpaces + index
                 }
             }
-            
-            let lhs = Array(prevSpaces..<curVisibleSpaceID).map { String($0) }.joined(separator: " ")
-                    
-            let rhs = curVisibleSpaceID != allSpaces.count + prevSpaces - 1
-                ? Array(curVisibleSpaceID + 1...(allSpaces.count + prevSpaces - 1)).map { String($0) }.joined(separator: " ")
-                : ""
-            
-            let formattedLHS = NSMutableAttributedString(string: lhs, attributes: sandwichAttributes)
-            let formattedRHS = NSMutableAttributedString(string: rhs, attributes: sandwichAttributes)
+            if(curVisibleSpaceID == -1) {
+                result.append(NSMutableAttributedString(string: "fullscreen", attributes: sandwichAttributes))
+            } else {
+                let lhs = Array(prevSpaces..<curVisibleSpaceID).map { String($0) }.joined(separator: " ")
+                        
+                let rhs = curVisibleSpaceID != allSpaces.count + prevSpaces - 1
+                    ? Array(curVisibleSpaceID + 1...(allSpaces.count + prevSpaces - 1)).map { String($0) }.joined(separator: " ")
+                    : ""
+                
+                let formattedLHS = NSMutableAttributedString(string: lhs, attributes: sandwichAttributes)
+                let formattedRHS = NSMutableAttributedString(string: rhs, attributes: sandwichAttributes)
 
-            let boldAttributes = [
-                NSAttributedString.Key.font : NSFont.boldSystemFont(ofSize: 16),
-                NSAttributedString.Key.foregroundColor: curVisibleSpaceID == activeSpaceID ? NSColor.red: NSColor.white,
-            ]
-            
-            let cnt = String(" \(curVisibleSpaceID) ")
-            let formattedCNT = NSMutableAttributedString(string: cnt, attributes: boldAttributes)
-            
-            result.append(formattedLHS)
-            result.append(formattedCNT)
-            result.append(formattedRHS)
-            
-            if(displayIndex + 1 < displays.count) {
-                let splitAttributes = [
+                let boldAttributes = [
                     NSAttributedString.Key.font : NSFont.boldSystemFont(ofSize: 16),
+                    NSAttributedString.Key.foregroundColor: curVisibleSpaceID == activeSpaceID ? NSColor.red: NSColor.green,
                 ]
-                let formattedSplit = NSMutableAttributedString(string: String(" | "), attributes: splitAttributes)
-                result.append(formattedSplit)
+                
+                let cnt = String(" \(curVisibleSpaceID) ")
+                let formattedCNT = NSMutableAttributedString(string: cnt, attributes: boldAttributes)
+                
+                result.append(formattedLHS)
+                result.append(formattedCNT)
+                result.append(formattedRHS)
+                
+                if(displayIndex + 1 < displays.count) {
+                    let splitAttributes = [
+                        NSAttributedString.Key.font : NSFont.boldSystemFont(ofSize: 16),
+                    ]
+                    let formattedSplit = NSMutableAttributedString(string: String(" | "), attributes: splitAttributes)
+                    result.append(formattedSplit)
+                }
+                prevSpaces += allSpaces.count
             }
-            prevSpaces += allSpaces.count
         }
 
         
