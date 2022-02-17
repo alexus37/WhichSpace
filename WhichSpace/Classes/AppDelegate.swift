@@ -121,7 +121,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
         let activeDisplay = CGSCopyActiveMenuBarDisplayIdentifier(conn) as! String
         
         var activeSpaceID = -1
-        var curVisibleSpaceID = -1
         var prevSpaces = 1
         let sandwichAttributes = [
             NSAttributedString.Key.font: NSFont.systemFont(ofSize: 12),
@@ -129,8 +128,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
         ]
         
         let result = NSMutableAttributedString(string: "", attributes: sandwichAttributes)
-        
+        // for every display
         for (displayIndex, d) in displays.enumerated() {
+            var curVisibleSpaceID = -1
             let allSpaces: NSMutableArray = []
             
             guard
@@ -140,7 +140,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
                 else {
                     continue
             }
-
+            
+            // check if the display if currently the main display
             switch dispID {
             case mainDisplay, activeDisplay:
                 activeSpaceID = current["ManagedSpaceID"] as! Int
@@ -167,6 +168,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, SUUpdaterDel
                     activeSpaceID = prevSpaces + index
                 }
             }
+            
             if(curVisibleSpaceID == -1) {
                 result.append(NSMutableAttributedString(string: "fullscreen", attributes: sandwichAttributes))
             } else {
